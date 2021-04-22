@@ -27,7 +27,7 @@ func (u *urls) Set(value string) error {
 func main() {
 	// Parse flags.
 	var e exaBGP
-	flag.StringVar(&e.asn, "asn", "64512", "Autonomous System Number between 64512-65534")
+	flag.UintVar(&e.asn, "asn", 64512, "Autonomous System Number between 64512-65534")
 	flag.StringVar(&e.nextHop, "nexthop", "192.168.0.254", "Next hop for routes")
 	refreshRate := flag.Duration("refresh-rate", 60*time.Minute, "Refresh timer")
 	var feeds urls

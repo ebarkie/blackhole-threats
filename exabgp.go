@@ -63,13 +63,13 @@ func (c routeCmd) String() string {
 }
 
 type exaBGP struct {
-	asn     string
+	asn     uint
 	nextHop string
 }
 
 func (e exaBGP) route(cmd routeCmd, net ...*net.IPNet) {
 	for _, n := range net {
-		fmt.Printf("%s route %s next-hop %s community [%s:666]\n",
+		fmt.Printf("%s route %s next-hop %s community [%d:666]\n",
 			cmd, n, e.nextHop, e.asn)
 	}
 }
