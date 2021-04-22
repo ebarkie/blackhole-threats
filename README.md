@@ -26,7 +26,7 @@ Usage of ./blackhole-threats:
 ### ExaBGP v4
 
 ```
-process blocklist {
+process threats {
 	run /etc/exabgp/exabgp-blackhole -feed https://www.spamhaus.org/drop/drop.txt -feed https://www.spamhaus.org/drop/edrop.txt -feed https://www.talosintelligence.com/documents/ip-blacklist -feed https://sslbl.abuse.ch/blacklist/sslipblacklist.txt -feed https://rules.emergingthreats.net/fwrules/emerging-Block-IPs.txt -feed https://lists.blocklist.de/lists/all.txt;
 	encoder text;
 }
@@ -39,7 +39,7 @@ template {
 		}
 
 		api connection {
-			processes [ blocklist ];
+			processes [ threats ];
 		}
 	}
 }
