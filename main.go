@@ -40,7 +40,6 @@ func main() {
 	// Update routes.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
 	go e.updateRoutes(ctx, *refreshRate, feeds)
 
 	// Block receiving messages until stdin is closed.
