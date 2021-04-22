@@ -2,9 +2,10 @@
 
 # Blackhole threats (with ExaBGP)
 
-This is an ExaBGP API process which downloads threat feeds on a periodic basis,
-summarizes them, and maintains them as routes.  Routers can then peer with
-ExaBGP and blackhole these routes.
+This is an [ExaBGP](https://github.com/Exa-Networks/exabgp) API process which
+downloads IPv4/v6 threat feeds on a periodic basis, summarizes them, and
+maintains them as routes.  Routers can then peer with ExaBGP and blackhole
+these routes.
 
 ## Usage
 
