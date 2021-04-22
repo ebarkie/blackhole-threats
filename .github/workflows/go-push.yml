@@ -1,0 +1,46 @@
+name: Push
+
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+
+      matrix:
+        goos: [freebsd, linux, netbsd, openbsd]
+        goarch: [amd64]
+
+        include:
+          - goos: freebsd
+            goarch: arm
+
+          - goos: linux
+            goarch: arm
+          - goos: linux
+            goarch: arm64
+          - goos: linux
+            goarch: ppc64le
+
+          - goos: netbsd
+            goarch: arm
+
+    name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
+
+    runs-on: ubuntu-latest
+
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Run Go 1.16 pipeline
+        uses: ebarkie/actions/go/1.16@master
+        with:
+          build: true
