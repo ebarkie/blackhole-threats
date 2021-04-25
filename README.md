@@ -2,8 +2,8 @@
 
 # Blackhole threats (with GoBGP)
 
-This is a BGP server based on [GoBGP](https://github.com/osrg/gobgp) which
-downloads IPv4/v6 threat feeds on a periodic basis, summarizes them, and
+This is a stand-alone BGP server based on [GoBGP](https://github.com/osrg/gobgp)
+which downloads IPv4/v6 threat feeds on a periodic basis, summarizes them, and
 maintains them as routes.  Routers can then iBGP peer with it and blackhole
 these routes.
 
