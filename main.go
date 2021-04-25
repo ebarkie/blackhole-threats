@@ -7,10 +7,10 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
-	"os"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type urls []string
@@ -26,22 +26,30 @@ func (u *urls) Set(value string) error {
 
 func main() {
 	// Parse flags.
-	var e exaBGP
-	flag.UintVar(&e.asn, "asn", 64512, "Autonomous System Number between 64512-65534")
-	flag.StringVar(&e.nextHop, "nexthop", "192.168.0.254", "Next hop for routes")
-	refreshRate := flag.Duration("refresh-rate", 60*time.Minute, "Refresh timer")
+	configFile := flag.String("f", "gobgpd.conf", "GoBGP configuration file")
+	debug := flag.Bool("debug", false, "Enable debug logging")
 	var feeds urls
 	flag.Var(&feeds, "feed", "Threat intelligence feed (use multiple times)")
+	refreshRate := flag.Duration("refresh-rate", 60*time.Minute, "Refresh timer")
 	flag.Parse()
 
-	// Set logging to stderr so it doesn't interfere with the API.
-	log.SetOutput(os.Stderr)
+	if *debug {
+		log.SetLevel(log.DebugLevel)
+	}
 
-	// Update routes.
+	// Start BGP server.
+	bh, err := NewServer(*configFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Info("Server started")
+
+	// Update routes at refresh rate.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	go e.updateRoutes(ctx, *refreshRate, feeds)
-
-	// Block receiving messages until stdin is closed.
-	log.Printf("Receive closed with err = %v", recvMsgs())
+	bh.RefreshRate = *refreshRate
+	bh.Feeds = feeds
+	log.WithFields(log.Fields{
+		"err": bh.UpdateRoutes(ctx),
+	}).Info("Server stopped")
 }
