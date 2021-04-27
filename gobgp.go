@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/ebarkie/netaggr/pkg/netcalc"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
@@ -68,26 +69,48 @@ func (bh BlackHole) withdraw(nets ...*net.IPNet) error {
 }
 
 func (bh BlackHole) addPath(withdraw bool, nets ...*net.IPNet) error {
+	var (
+		v4Family = &api.Family{Afi: api.Family_AFI_IP, Safi: api.Family_SAFI_UNICAST}
+		v6Family = &api.Family{Afi: api.Family_AFI_IP6, Safi: api.Family_SAFI_UNICAST}
+	)
+
 	for _, n := range nets {
-		prefixLen, _ := n.Mask.Size()
-		nlri, _ := ptypes.MarshalAny(&api.IPAddressPrefix{
+		ones, bits := n.Mask.Size()
+
+		nlri, err := ptypes.MarshalAny(&api.IPAddressPrefix{
 			Prefix:    n.IP.String(),
-			PrefixLen: uint32(prefixLen),
+			PrefixLen: uint32(ones),
 		})
+		if err != nil {
+			return err
+		}
 
 		origin, _ := ptypes.MarshalAny(&api.OriginAttribute{
 			Origin: 0,
 		})
-		nextHop, _ := ptypes.MarshalAny(&api.NextHopAttribute{
-			NextHop: bh.routerId,
-		})
 		communities, _ := ptypes.MarshalAny(&api.CommunitiesAttribute{
-			Communities: []uint32{bh.as<<16 ^ 666},
+			Communities: []uint32{bh.as<<16 ^ 666}, // RFC7999
 		})
 
-		_, err := bh.server.AddPath(context.Background(), &api.AddPathRequest{
+		var family *api.Family
+		var nextHop *anypb.Any
+		if bits <= 32 { // IPv4
+			family = v4Family
+			nextHop, _ = ptypes.MarshalAny(&api.NextHopAttribute{
+				NextHop: bh.routerId,
+			})
+		} else { // IPv6
+			family = v6Family
+			nextHop, _ = ptypes.MarshalAny(&api.MpReachNLRIAttribute{
+				Family:   v6Family,
+				Nlris:    []*any.Any{nlri},
+				NextHops: []string{"::ffff:" + bh.routerId}, //a51:3601"},
+			})
+		}
+
+		_, err = bh.server.AddPath(context.Background(), &api.AddPathRequest{
 			Path: &api.Path{
-				Family:     &api.Family{Afi: api.Family_AFI_IP, Safi: api.Family_SAFI_UNICAST},
+				Family:     family,
 				Nlri:       nlri,
 				Pattrs:     []*any.Any{origin, nextHop, communities},
 				IsWithdraw: withdraw,

@@ -2,7 +2,7 @@
 
 # Blackhole threats (with GoBGP)
 
-This is a stand-alone BGP server based on [GoBGP](https://github.com/osrg/gobgp)
+This is a stand-alone BGP route server based on [GoBGP](https://github.com/osrg/gobgp)
 which downloads IPv4/v6 threat feeds on a periodic basis, summarizes them, and
 maintains them as routes.  Routers can then iBGP peer with it and blackhole
 these routes.
@@ -42,11 +42,13 @@ Usage of ./blackhole-threats:
 /routing bgp instance
 set default as=64512
 /routing bgp peer
-add allow-as-in=2 comment="C&C and don't route or peer IP's" in-filter=threats-in name=threats \
-    remote-address=192.168.1.2 ttl=default
+add address-families=ip,ipv6 allow-as-in=2 in-filter=threats-in name=threats remote-address=\
+    192.168.1.2 ttl=default
 /routing filter
-add action=accept bgp-communities=64512:666 chain=threats-in comment=\
-    "Blackhole C&C and don't route or peer IP's" protocol=bgp set-type=blackhole
+add action=accept address-family=ip bgp-communities=64512:666 chain=threats-in comment=\
+    "Blackhole IPv4 C&C and don't route or peer addresses" protocol=bgp set-type=blackhole
+add address-family=ipv6 bgp-communities=64512:666 chain=threats-in comment=\
+    "Unreachable IPv6 C&C and don't route or peer addresses" protocol=bgp set-type=unreachable
 ```
 
 ## License

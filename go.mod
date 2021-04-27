@@ -13,4 +13,5 @@ require (
 	github.com/vishvananda/netlink v1.1.0 // indirect
 	golang.org/x/net v0.0.0-20210423184538-5f58ad60dda6 // indirect
 	google.golang.org/grpc v1.37.0 // indirect
+	google.golang.org/protobuf v1.26.0
 )
