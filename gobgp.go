@@ -104,7 +104,7 @@ func (bh BlackHole) addPath(withdraw bool, nets ...*net.IPNet) error {
 			nextHop, _ = ptypes.MarshalAny(&api.MpReachNLRIAttribute{
 				Family:   v6Family,
 				Nlris:    []*any.Any{nlri},
-				NextHops: []string{"::ffff:" + bh.routerId}, //a51:3601"},
+				NextHops: []string{"::ffff:" + bh.routerId},
 			})
 		}
 
