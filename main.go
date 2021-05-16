@@ -39,7 +39,7 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-        log.Infof("Blackhole threats (version %s)", version)
+	log.Infof("Blackhole threats (version %s)", version)
 
 	// Start BGP server.
 	bh, err := NewServer(*configFile)

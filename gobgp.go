@@ -117,7 +117,9 @@ func (bh BlackHole) UpdateRoutes(ctx context.Context) error {
 	for {
 		select {
 		case <-t.C:
-			log.WithFields(log.Fields{"rate": bh.RefreshRate}).Debug("Refresh started")
+			log.WithFields(log.Fields{
+				"rate": bh.RefreshRate,
+			}).Debug("Refresh started")
 
 			prev = cur
 			cur = parseFeeds(bh.Feeds...)
