@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 EnvironmentFile=-/etc/default/blackhole-threats
-ExecStart=/usr/sbin/blackhole-threats -f $CONF $EXTRA_OPTS
+ExecStart=/usr/sbin/blackhole-threats -conf $CONF $EXTRA_OPTS
 Restart=on-failure
 
 [Install]

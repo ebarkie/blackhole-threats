@@ -13,7 +13,7 @@ these routes.
 Usage of ./blackhole-threats:
   -debug
     	Enable debug logging
-  -f string
+  -conf string
     	GoBGP configuration file (default "gobgpd.conf")
   -feed value
     	Threat intelligence feed (use multiple times)

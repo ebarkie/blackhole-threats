@@ -28,7 +28,7 @@ func (u *urls) Set(value string) error {
 
 func main() {
 	// Parse flags.
-	configFile := flag.String("f", "gobgpd.conf", "GoBGP configuration file")
+	conf := flag.String("conf", "gobgpd.conf", "GoBGP configuration file")
 	debug := flag.Bool("debug", false, "Enable debug logging")
 	var feeds urls
 	flag.Var(&feeds, "feed", "Threat intelligence feed (use multiple times)")
@@ -42,7 +42,7 @@ func main() {
 	log.Infof("Blackhole threats (version %s)", version)
 
 	// Start BGP server.
-	bh, err := NewServer(*configFile)
+	bh, err := NewServer(*conf)
 	if err != nil {
 		log.Fatal(err)
 	}
