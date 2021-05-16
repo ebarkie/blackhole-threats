@@ -40,19 +40,16 @@ func readFeed(feed string) (io.ReadCloser, error) {
 
 // parseFeeds parses feeds concurrently and returns summarized nets.
 func parseFeeds(feeds ...string) (nets netcalc.Nets) {
-	// Read the channel and append IPNets until it's closed.
+	// Parse all of the feeds concurrently.
 	netC := make(chan *net.IPNet)
+	var wg sync.WaitGroup
+	wg.Add(len(feeds))
 	go func() {
-		for n := range netC {
-			nets = append(nets, n)
-		}
+		wg.Wait()
+		close(netC)
 	}()
 
-	// Parse all the feeds.
-	var wg sync.WaitGroup
 	for _, f := range feeds {
-		wg.Add(1)
-
 		go func(feed string) {
 			defer wg.Done()
 
@@ -73,8 +70,10 @@ func parseFeeds(feeds ...string) (nets netcalc.Nets) {
 
 		}(f)
 	}
-	wg.Wait()
-	close(netC)
+
+	for n := range netC {
+		nets = append(nets, n)
+	}
 
 	// Summarize the networks.
 	totalNets := len(nets)

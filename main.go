@@ -9,7 +9,10 @@ package main
 import (
 	"context"
 	"flag"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -49,10 +52,14 @@ func main() {
 	log.Info("Server started")
 
 	// Update routes at refresh rate.
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	bh.RefreshRate = *refreshRate
 	bh.Feeds = feeds
+	bh.RefreshRate = *refreshRate
+	bh.SigC = make(chan os.Signal, 1)
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	signal.Notify(bh.SigC, os.Signal(syscall.SIGUSR1))
+
 	log.WithFields(log.Fields{
 		"err": bh.UpdateRoutes(ctx),
 	}).Info("Server stopped")

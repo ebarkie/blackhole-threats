@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"net"
+	"os"
 	"time"
 
 	"github.com/ebarkie/netaggr/pkg/netcalc"
@@ -43,8 +44,9 @@ type BlackHole struct {
 	as       uint32
 	routerId string
 
-	RefreshRate time.Duration
 	Feeds       urls
+	RefreshRate time.Duration
+	SigC        chan os.Signal
 }
 
 func (bh BlackHole) announce(nets ...*net.IPNet) error {
@@ -138,7 +140,13 @@ func (bh BlackHole) UpdateRoutes(ctx context.Context) error {
 				"announced": len(a),
 				"withdrawn": len(w),
 			}).Info("Refresh complete")
+		case s := <-bh.SigC:
+			log.WithFields(log.Fields{
+				"signal": s,
+			}).Warn("Received refresh signal")
+			t.Reset(0)
 		case <-ctx.Done():
+			log.Warn(ctx.Err())
 			return nil
 		}
 	}
