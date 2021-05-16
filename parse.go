@@ -60,6 +60,7 @@ func parseFeeds(feeds ...string) (nets netcalc.Nets) {
 				}).Error("Feed Couldn't be read")
 				return
 			}
+			defer r.Close()
 
 			i, err := netcalc.ReadFrom(r, netC)
 			log.WithFields(log.Fields{
