@@ -57,7 +57,7 @@ func parseFeeds(feeds ...string) (nets netcalc.Nets) {
 			if err != nil {
 				log.WithFields(log.Fields{
 					"err": err,
-				}).Error("Feed Couldn't be read")
+				}).Error("Feed read error")
 				return
 			}
 			defer r.Close()
