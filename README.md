@@ -21,6 +21,16 @@ Usage of ./blackhole-threats:
     	Refresh timer (default 1h0m0s)
 ```
 
+## Feeds
+
+Some interesting threat intelligence feeds:
+- [abuse.ch Botnet C2 IP Blacklist](https://sslbl.abuse.ch/blacklist/sslipblacklist.txt)
+- [blocklist.de fail2ban reporting service](https://lists.blocklist.de/lists/all.txt)
+- [Emerging Threats fwip rules](https://rules.emergingthreats.net/fwrules/emerging-Block-IPs.txt)
+- [Spamhaus Don't Route Or Peer List (DROP)](https://www.spamhaus.org/drop/drop.txt)
+- [Spamhaus Extended DROP List (EDROP)](https://www.spamhaus.org/drop/edrop.txt)
+- [Talos IP Blacklist](https://www.talosintelligence.com/documents/ip-blacklist)
+
 ## Configuration
 
 ### GoBGP
