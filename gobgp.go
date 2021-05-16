@@ -7,8 +7,6 @@ package main
 import (
 	"context"
 	"net"
-	"net/http"
-	"sort"
 	"time"
 
 	"github.com/ebarkie/netaggr/pkg/netcalc"
@@ -21,17 +19,6 @@ import (
 	"github.com/osrg/gobgp/pkg/server"
 	log "github.com/sirupsen/logrus"
 )
-
-func parseFeed(nets *netcalc.Nets, url string) error {
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	_, err = nets.ReadFrom(resp.Body)
-	return err
-}
 
 func NewServer(configFile string) (BlackHole, error) {
 	c, err := config.ReadConfigFile(configFile, "toml")
@@ -133,22 +120,7 @@ func (bh BlackHole) UpdateRoutes(ctx context.Context) error {
 			log.WithFields(log.Fields{"rate": bh.RefreshRate}).Debug("Refresh started")
 
 			prev = cur
-			cur = netcalc.Nets{}
-			total := 0
-			for _, f := range bh.Feeds {
-				err := parseFeed(&cur, f)
-				log.WithFields(log.Fields{
-					"feed":     f,
-					"networks": len(cur) - total,
-					"total":    len(cur),
-					"err":      err,
-				}).Info("Parsed feed")
-				total = len(cur)
-			}
-
-			sort.Sort(cur)
-			cur.Assim()
-			cur.Aggr()
+			cur = parseFeeds(bh.Feeds...)
 
 			a, w := netcalc.Diff(prev, cur)
 			if err := bh.announce(a...); err != nil {
