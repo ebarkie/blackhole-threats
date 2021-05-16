@@ -151,3 +151,7 @@ func (bh BlackHole) UpdateRoutes(ctx context.Context) error {
 		}
 	}
 }
+
+func (bh BlackHole) Stop() error {
+	return bh.server.StopBgp(context.Background(), &api.StopBgpRequest{})
+}

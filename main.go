@@ -50,6 +50,7 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Info("Server started")
+	defer bh.Stop()
 
 	// Update routes at refresh rate.
 	bh.Feeds = feeds
