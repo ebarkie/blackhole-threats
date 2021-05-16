@@ -136,13 +136,13 @@ func (bh BlackHole) UpdateRoutes(ctx context.Context) error {
 
 			t.Reset(bh.RefreshRate)
 			log.WithFields(log.Fields{
-				"networks":  len(cur),
+				"nets":      len(cur),
 				"announced": len(a),
 				"withdrawn": len(w),
 			}).Info("Refresh complete")
 		case s := <-bh.SigC:
 			log.WithFields(log.Fields{
-				"signal": s,
+				"sig": s,
 			}).Warn("Received refresh signal")
 			t.Reset(0)
 		case <-ctx.Done():

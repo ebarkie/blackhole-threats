@@ -5,6 +5,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -30,6 +31,10 @@ func readFeed(feed string) (io.ReadCloser, error) {
 		resp, err := http.Get(feed)
 		if err != nil {
 			return nil, err
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("non-OK status code: %d", resp.StatusCode)
 		}
 
 		return resp.Body, nil
@@ -63,12 +68,19 @@ func parseFeeds(feeds ...string) (nets netcalc.Nets) {
 			defer r.Close()
 
 			i, err := netcalc.ReadFrom(r, netC)
-			log.WithFields(log.Fields{
-				"feed":     feed,
-				"networks": i,
-				"err":      err,
-			}).Info("Feed parsed")
+			if err != nil {
+				log.WithFields(log.Fields{
+					"feed": feed,
+					"nets": i,
+					"err":  err,
+				}).Error("Feed parse error")
+				return
+			}
 
+			log.WithFields(log.Fields{
+				"feed": feed,
+				"nets": i,
+			}).Info("Feed parsed")
 		}(f)
 	}
 
