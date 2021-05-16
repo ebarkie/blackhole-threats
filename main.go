@@ -4,6 +4,8 @@
 
 package main
 
+//go:generate ./version.sh
+
 import (
 	"context"
 	"flag"
@@ -30,12 +32,14 @@ func main() {
 	debug := flag.Bool("debug", false, "Enable debug logging")
 	var feeds urls
 	flag.Var(&feeds, "feed", "Threat intelligence feed (use multiple times)")
-	refreshRate := flag.Duration("refresh-rate", 60*time.Minute, "Refresh timer")
+	refreshRate := flag.Duration("refresh-rate", 120*time.Minute, "Refresh timer")
 	flag.Parse()
 
 	if *debug {
 		log.SetLevel(log.DebugLevel)
 	}
+
+        log.Infof("Blackhole threats (version %s)", version)
 
 	// Start BGP server.
 	bh, err := NewServer(*configFile)

@@ -1,0 +1,12 @@
+[Unit]
+Description=Blackhole threats BGP daemon
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/blackhole-threats
+ExecStart=/usr/sbin/blackhole-threats -f $CONF $EXTRA_OPTS
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

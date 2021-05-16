@@ -1,0 +1,21 @@
+Source: blackhole-threats
+Section: network
+Priority: extra
+Maintainer: Eric Barkie <ebarkie@users.noreply.github.com>
+Build-Depends: debhelper (>= 10),
+               dh-golang,
+               git,
+               golang-any (>= 2:1.16~) | golang-go (>= 2:1.16~)
+Standards-Version: 4.0.0
+Homepage: https://github.com/ebarkie/blackhole-threats
+XS-Go-Import-Path: github.com/ebarkie/blackhole-threats
+
+Package: blackhole-threats
+Architecture: any
+Built-Using: ${misc:Built-Using}
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Description: Blackhole threats BGP daemon
+ Stand-alone BGP route server based on GoBGP which downloads IPv4/v6 threat
+ feeds on a periodic basis, summarizes them, and maintains them as routes.
+ Routers can then iBGP peer with it and blackhole these routes.

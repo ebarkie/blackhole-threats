@@ -1,0 +1,8 @@
+/.debhelper
+/*.debhelper.log
+/*.p*.debhelper
+/*.substvars
+/debhelper-build-stamp
+/files
+
+/blackhole-threats

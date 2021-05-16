@@ -1,0 +1,40 @@
+#!/usr/bin/make -f
+
+PACKAGE   := $(shell dh_listpackages)
+TMP       := $(CURDIR)/debian/$(PACKAGE)
+BUILD_DIR := $(CURDIR)/_build
+
+export GO111MODULE             := on
+export GOCACHE                 := $(BUILD_DIR)/.cache/go-build
+
+ifeq ($(DEB_HOST_ARCH), amd64)
+	GOARCH := amd64
+else ifeq ($(DEB_HOST_ARCH), armhf)
+	GOARCH := arm
+endif
+
+export DH_GOPKG                := github.com/ebarkie/$(PACKAGE)
+export DH_GOLANG_GO_GENERATE   := 1
+export DH_GOLANG_INSTALL_EXTRA := version.sh
+
+%:
+	dh $@ --buildsystem=golang --with=golang,systemd --builddirectory=$(BUILD_DIR)
+
+override_dh_auto_build:
+	chmod u+x $(BUILD_DIR)/src/$(DH_GOPKG)/version.sh
+	GOARCH=$(GOARCH) dh_auto_build
+
+override_dh_auto_clean:
+	[ -d $(BUILD_DIR)/pkg ] && chmod -R u+w $(BUILD_DIR)/pkg || true
+	[ -d $(GOCACHE) ] && chmod -R u+w $(GOCACHE) || true
+	dh_auto_clean
+
+override_dh_auto_install:
+	dh_auto_install -- --no-source
+	mv $(TMP)/usr/bin $(TMP)/usr/sbin
+	mkdir $(TMP)/etc
+	cp gobgpd.conf.sample $(TMP)/etc/blackhole-threats.conf
+
+override_dh_auto_test:
+
+override_dh_shlibdeps:

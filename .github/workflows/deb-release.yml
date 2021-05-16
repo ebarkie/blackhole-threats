@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  create_release:
+    name: Create release
+
+    runs-on: ubuntu-latest
+
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+
+    steps:
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+  build:
+    strategy:
+      fail-fast: false
+
+      matrix:
+        hostarch: [amd64, armhf]
+
+    name: Attach ${{ matrix.hostarch }}
+
+    runs-on: ubuntu-latest
+
+    needs: create_release
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Fetch git tags
+        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+
+      - name: Build Debian package
+        id: deb
+        uses: ebarkie/actions/deb/go@master
+        with:
+          hostarch: ${{ matrix.hostarch }}
+          version: ${{ github.ref }}
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.deb.outputs.asset_path }}
+          asset_name: ${{ steps.deb.outputs.asset_name }}
+          asset_content_type: application/zip

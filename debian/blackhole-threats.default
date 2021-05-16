@@ -1,0 +1,5 @@
+# Default settings for blackhole-threats.
+
+CONF="/etc/blackhole-threats.conf"
+
+EXTRA_OPTS=""
