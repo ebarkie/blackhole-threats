@@ -5,6 +5,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -19,6 +20,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var ErrUnhandledScheme = errors.New("unhandled scheme")
+
 // readFeed determines a feed's scheme and creates an appropriate io.ReadCloser.
 func readFeed(feed string) (io.ReadCloser, error) {
 	u, err := url.Parse(feed)
@@ -27,6 +30,8 @@ func readFeed(feed string) (io.ReadCloser, error) {
 	}
 
 	switch u.Scheme {
+	case "":
+		return os.Open(feed)
 	case "http", "https":
 		resp, err := http.Get(feed)
 		if err != nil {
@@ -40,12 +45,12 @@ func readFeed(feed string) (io.ReadCloser, error) {
 		return resp.Body, nil
 	}
 
-	return os.Open(feed)
+	return nil, ErrUnhandledScheme
 }
 
 // parseFeeds parses feeds concurrently and returns summarized nets.
 func parseFeeds(feeds ...string) (nets netcalc.Nets) {
-	// Parse all of the feeds concurrently.
+	// Parse all of the feeds concurrently
 	netC := make(chan *net.IPNet)
 	var wg sync.WaitGroup
 	wg.Add(len(feeds))
@@ -88,7 +93,7 @@ func parseFeeds(feeds ...string) (nets netcalc.Nets) {
 		nets = append(nets, n)
 	}
 
-	// Summarize the networks.
+	// Summarize the networks
 	totalNets := len(nets)
 	sort.Sort(nets)
 	nets.Assim()

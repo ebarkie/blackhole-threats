@@ -2,10 +2,10 @@
 
 # Blackhole threats (with GoBGP)
 
-This is a stand-alone BGP route server based on [GoBGP](https://github.com/osrg/gobgp)
+Stand-alone BGP route server based on [GoBGP](https://github.com/osrg/gobgp)
 which downloads IPv4/v6 threat feeds on a periodic basis, summarizes them, and
-maintains them as routes.  Routers can then iBGP peer with it and blackhole
-these routes.
+maintains them as routes.  Routers can then iBGP peer with it and
+[blackhole](https://en.wikipedia.org/wiki/Black_hole_(networking)) these routes.
 
 ## Usage
 
@@ -18,12 +18,12 @@ Usage of ./blackhole-threats:
   -feed value
     	Threat intelligence feed (use multiple times)
   -refresh-rate duration
-    	Refresh timer (default 1h0m0s)
+    	Refresh timer (default 2h0m0s)
 ```
 
 ## Feeds
 
-Some interesting threat intelligence feeds:
+Some threat intelligence feeds:
 - [abuse.ch Botnet C2 IP Blacklist](https://sslbl.abuse.ch/blacklist/sslipblacklist.txt)
 - [blocklist.de fail2ban reporting service](https://lists.blocklist.de/lists/all.txt)
 - [Emerging Threats fwip rules](https://rules.emergingthreats.net/fwrules/emerging-Block-IPs.txt)

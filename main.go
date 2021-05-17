@@ -30,7 +30,7 @@ func (u *urls) Set(value string) error {
 }
 
 func main() {
-	// Parse flags.
+	// Parse flags
 	conf := flag.String("conf", "gobgpd.conf", "GoBGP configuration file")
 	debug := flag.Bool("debug", false, "Enable debug logging")
 	var feeds urls
@@ -42,9 +42,9 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	log.Infof("Blackhole threats (version %s)", version)
+	log.Infof("BGP threat blackhole route server (version %s)", version)
 
-	// Start BGP server.
+	// Start Blackhole server
 	bh, err := NewServer(*conf)
 	if err != nil {
 		log.Fatal(err)
@@ -52,7 +52,7 @@ func main() {
 	log.Info("Server started")
 	defer bh.Stop()
 
-	// Update routes at refresh rate.
+	// Update routes at refresh rate
 	bh.Feeds = feeds
 	bh.RefreshRate = *refreshRate
 	bh.SigC = make(chan os.Signal, 1)
