@@ -6,3 +6,9 @@
   [neighbors.config]
     neighbor-address = "192.168.1.1"
     peer-as = 64512
+  [[neighbors.afi-safis]]
+    [neighbors.afi-safis.config]
+      afi-safi-name = "ipv4-unicast"
+  [[neighbors.afi-safis]]
+    [neighbors.afi-safis.config]
+      afi-safi-name = "ipv6-unicast"
