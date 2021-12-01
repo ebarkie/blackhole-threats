@@ -44,9 +44,17 @@ Some threat intelligence feeds:
   [neighbors.config]
     neighbor-address = "192.168.1.1"
     peer-as = 64512
+  [[neighbors.afi-safis]]
+    [neighbors.afi-safis.config]
+      afi-safi-name = "ipv4-unicast"
+  [[neighbors.afi-safis]]
+    [neighbors.afi-safis.config]
+      afi-safi-name = "ipv6-unicast"
 ```
 
 ### Mikrotik RouterOS
+
+#### v6
 
 ```
 /routing bgp instance
@@ -59,6 +67,19 @@ add action=accept address-family=ip bgp-communities=64512:666 chain=threats-in c
     "Blackhole IPv4 C&C and don't route or peer addresses" protocol=bgp set-type=blackhole
 add address-family=ipv6 bgp-communities=64512:666 chain=threats-in comment=\
     "Unreachable IPv6 C&C and don't route or peer addresses" protocol=bgp set-type=unreachable
+```
+
+#### v7
+
+```
+/routing bgp template
+set default as=64512 disabled=no routing-table=main
+/routing bgp connection
+add address-families=ip,ipv6 as=64512 disabled=no input.allow-as=2 .filter=threats-in local.role=ibgp \
+    name=threats remote.address=192.168.1.2 routing-table=main templates=default
+/routing filter rule
+add chain=threats-in comment="Blackhole C&C and don't route or peer addresses" disabled=no rule=\
+    "if (bgp-communities equal 64512:666) { set blackhole yes}"
 ```
 
 ## License
