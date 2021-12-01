@@ -79,7 +79,7 @@ add address-families=ip,ipv6 as=64512 disabled=no input.allow-as=2 .filter=threa
     name=threats remote.address=192.168.1.2 routing-table=main templates=default
 /routing filter rule
 add chain=threats-in comment="Blackhole C&C and don't route or peer addresses" disabled=no rule=\
-    "if (bgp-communities equal 64512:666) { set blackhole yes }"
+    "if (bgp-communities equal 64512:666) { set blackhole yes; accept }"
 ```
 
 ## License
