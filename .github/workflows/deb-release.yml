@@ -31,7 +31,7 @@ jobs:
       fail-fast: false
 
       matrix:
-        hostarch: [amd64, armhf]
+        hostarch: [amd64, arm64, armhf]
 
     name: Attach ${{ matrix.hostarch }}
 
