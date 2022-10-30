@@ -1,12 +1,12 @@
 module github.com/ebarkie/blackhole-threats
 
-go 1.17
+go 1.19
 
 require (
 	github.com/ebarkie/netaggr v1.3.3
 	github.com/golang/protobuf v1.5.2
-	github.com/osrg/gobgp/v3 v3.5.0
-	github.com/sirupsen/logrus v1.8.1
+	github.com/osrg/gobgp/v3 v3.7.0
+	github.com/sirupsen/logrus v1.9.0
 	google.golang.org/protobuf v1.27.1
 )
 
@@ -30,7 +30,7 @@ require (
 	github.com/vishvananda/netlink v1.1.1-0.20210330154013-f5de75959ad5 // indirect
 	github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
-	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
 	google.golang.org/grpc v1.45.0 // indirect
