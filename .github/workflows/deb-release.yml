@@ -40,11 +40,10 @@ jobs:
     needs: create_release
 
     steps:
-      - name: Check out code
-        uses: actions/checkout@v2
-
-      - name: Fetch git tags
-        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+      - name: Check out code with tags
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
 
       - name: Build Debian package
         id: deb
