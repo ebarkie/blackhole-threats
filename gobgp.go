@@ -8,29 +8,29 @@ import (
 	"context"
 	"net"
 	"os"
+	"slices"
 	"time"
 
-	"github.com/ebarkie/netaggr/pkg/netcalc"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
 	api "github.com/osrg/gobgp/v3/api"
-	"github.com/osrg/gobgp/v3/pkg/config"
+	gobgpconfig "github.com/osrg/gobgp/v3/pkg/config"
 	"github.com/osrg/gobgp/v3/pkg/server"
 	log "github.com/sirupsen/logrus"
 )
 
 // NewServer creates, starts, and configures a new BGP server with configFile.
 func NewServer(configFile string) (Blackhole, error) {
-	c, err := config.ReadConfigFile(configFile, "toml")
+	c, err := gobgpconfig.ReadConfigFile(configFile, "toml")
 	if err != nil {
 		return Blackhole{}, err
 	}
 
 	s := server.NewBgpServer()
 	go s.Serve()
-	_, err = config.InitialConfig(context.Background(), s, c, true)
+	_, err = gobgpconfig.InitialConfig(context.Background(), s, c, true)
 
 	return Blackhole{
 		server:   s,
@@ -52,7 +52,7 @@ type Blackhole struct {
 	routerID string
 
 	// List of IPv4/6 threat feed URL's to download.
-	Feeds urls
+	Feeds []FeedConfig
 
 	// Feeds refresh timer.
 	RefreshRate time.Duration
@@ -61,101 +61,186 @@ type Blackhole struct {
 	SigC chan os.Signal
 }
 
-func (bh Blackhole) announce(nets ...*net.IPNet) error {
-	return bh.addPath(false, nets...)
+func (bh Blackhole) announce(ipnet *net.IPNet, comms ...uint32) error {
+	return bh.addPath(ipnet, comms...)
 }
 
-func (bh Blackhole) withdraw(nets ...*net.IPNet) error {
-	return bh.addPath(true, nets...)
+func (bh Blackhole) withdraw(ipnet *net.IPNet) error {
+	return bh.addPath(ipnet)
 }
 
-func (bh Blackhole) addPath(withdraw bool, nets ...*net.IPNet) error {
-	const bhComm = 666 // RFC7999
-
+// addPath announces a network with the specified communities, or withdraws it
+// if there are no communities.
+func (bh Blackhole) addPath(ipnet *net.IPNet, comms ...uint32) error {
 	var (
 		v4Family = &api.Family{Afi: api.Family_AFI_IP, Safi: api.Family_SAFI_UNICAST}
 		v6Family = &api.Family{Afi: api.Family_AFI_IP6, Safi: api.Family_SAFI_UNICAST}
 	)
 
-	for _, n := range nets {
-		ones, bits := n.Mask.Size()
+	ones, bits := ipnet.Mask.Size()
 
-		nlri, err := ptypes.MarshalAny(&api.IPAddressPrefix{
-			Prefix:    n.IP.String(),
-			PrefixLen: uint32(ones),
-		})
-		if err != nil {
-			return err
-		}
-
-		origin, _ := ptypes.MarshalAny(&api.OriginAttribute{
-			Origin: 0,
-		})
-		communities, _ := ptypes.MarshalAny(&api.CommunitiesAttribute{
-			Communities: []uint32{bh.as<<16 ^ bhComm},
-		})
-
-		var family *api.Family
-		var nextHop *anypb.Any
-		if bits <= 32 { // IPv4
-			family = v4Family
-			nextHop, _ = ptypes.MarshalAny(&api.NextHopAttribute{
-				NextHop: bh.routerID,
-			})
-		} else { // IPv6
-			family = v6Family
-			nextHop, _ = ptypes.MarshalAny(&api.MpReachNLRIAttribute{
-				Family:   v6Family,
-				Nlris:    []*any.Any{nlri},
-				NextHops: []string{"::ffff:" + bh.routerID},
-			})
-		}
-
-		_, err = bh.server.AddPath(context.Background(), &api.AddPathRequest{
-			Path: &api.Path{
-				Family:     family,
-				Nlri:       nlri,
-				Pattrs:     []*any.Any{origin, nextHop, communities},
-				IsWithdraw: withdraw,
-			}})
-		if err != nil {
-			return err
-		}
+	nlri, err := ptypes.MarshalAny(&api.IPAddressPrefix{
+		Prefix:    ipnet.IP.String(),
+		PrefixLen: uint32(ones),
+	})
+	if err != nil {
+		return err
 	}
 
-	return nil
+	originAttr, _ := ptypes.MarshalAny(&api.OriginAttribute{
+		Origin: 0,
+	})
+
+	communitiesAttr, _ := ptypes.MarshalAny(&api.CommunitiesAttribute{
+		Communities: comms,
+	})
+
+	var family *api.Family
+	var nextHopAttr *anypb.Any
+	if bits <= 32 { // IPv4
+		family = v4Family
+		nextHopAttr, _ = ptypes.MarshalAny(&api.NextHopAttribute{
+			NextHop: bh.routerID,
+		})
+	} else { // IPv6
+		family = v6Family
+		nextHopAttr, _ = ptypes.MarshalAny(&api.MpReachNLRIAttribute{
+			Family:   v6Family,
+			Nlris:    []*any.Any{nlri},
+			NextHops: []string{"::ffff:" + bh.routerID},
+		})
+	}
+
+	var isWithdraw bool
+	if len(comms) < 1 {
+		isWithdraw = true
+	}
+
+	_, err = bh.server.AddPath(context.Background(), &api.AddPathRequest{
+		Path: &api.Path{
+			Family:     family,
+			Nlri:       nlri,
+			Pattrs:     []*any.Any{originAttr, nextHopAttr, communitiesAttr},
+			IsWithdraw: isWithdraw,
+		}})
+
+	return err
+}
+
+type bgpNets map[string][]Comm
+
+func (b *bgpNets) add(ipnet *net.IPNet, comm Comm) {
+	cidr := ipnet.String()
+	(*b)[cidr] = append((*b)[cidr], comm)
+}
+
+func (b *bgpNets) reset() {
+	*b = make(bgpNets)
+}
+
+func diffF(a, b bgpNets, f func(*net.IPNet, ...uint32) error) (int, error) {
+	var n int
+	for cidr, aComms := range a {
+		bComms, exists := b[cidr]
+		// If there is any difference in communities then we need to
+		// withdraw and re-announce the network.
+		if exists && slices.Equal(aComms, bComms) {
+			continue
+		}
+
+		_, ipnet, err := net.ParseCIDR(cidr)
+		if err != nil {
+			return n, err
+		}
+		comms := make([]uint32, len(aComms))
+		for i := range len(aComms) {
+			comms[i] = uint32(aComms[i])
+		}
+		if err := f(ipnet, comms...); err != nil {
+			return n, err
+		}
+		n++
+	}
+
+	return n, nil
 }
 
 // UpdateRoutes continuously downloads the feeds and refreshes routes at the
 // specified refresh rate.
 func (bh Blackhole) UpdateRoutes(ctx context.Context) error {
-	var prev, cur netcalc.Nets
+	// Sort feeds into distinct communities for parsing and summarizing
+	commFeeds := make(map[Comm][]string)
+	for _, c := range bh.Feeds {
+		if c.Comm < 1 {
+			// RFC7999 blackhole community
+			c.Comm = Comm(bh.as<<16 ^ 666)
+		}
+
+		commFeeds[c.Comm] = append(commFeeds[c.Comm], c.URL)
+	}
+	var distinctComms []Comm
+	for comm := range commFeeds {
+		distinctComms = append(distinctComms, comm)
+	}
+	slices.Sort(distinctComms)
+
+	var prev, cur bgpNets
 
 	t := time.NewTimer(0) // Update immediately on startup
 	for {
 		select {
 		case <-t.C:
 			log.WithFields(log.Fields{
-				"rate": bh.RefreshRate,
+				"communities": len(distinctComms),
+				"rate":        bh.RefreshRate,
 			}).Debug("Refresh started")
 
 			prev = cur
-			cur = parseFeeds(bh.Feeds...)
+			cur.reset()
+			for _, comm := range distinctComms {
+				feeds := commFeeds[comm]
+				nets, totalNets := parseFeeds(feeds...)
+				log.WithFields(log.Fields{
+					"community":  comm.String(),
+					"feeds":      feeds,
+					"summarized": len(nets),
+					"total":      totalNets,
+				}).Info("Parsed feeds")
 
-			a, w := netcalc.Diff(prev, cur)
-			if err := bh.announce(a...); err != nil {
+				for _, net := range nets {
+					cur.add(net, comm)
+				}
+			}
+
+			wn, err := diffF(prev, cur, func(ipnet *net.IPNet, _ ...uint32) error {
+				log.WithFields(log.Fields{
+					"net": ipnet.String(),
+				}).Trace("Withdrew network")
+				return bh.withdraw(ipnet)
+
+			})
+			if err != nil {
 				return err
 			}
-			if err := bh.withdraw(w...); err != nil {
+
+			an, err := diffF(cur, prev, func(ipnet *net.IPNet, comms ...uint32) error {
+				log.WithFields(log.Fields{
+					"communities": comms,
+					"net":         ipnet.String(),
+				}).Trace("Announced network")
+				return bh.announce(ipnet, comms...)
+
+			})
+			if err != nil {
 				return err
 			}
 
-			t.Reset(bh.RefreshRate)
 			log.WithFields(log.Fields{
 				"nets":      len(cur),
-				"announced": len(a),
-				"withdrawn": len(w),
+				"announced": an,
+				"withdrawn": wn,
 			}).Info("Refresh complete")
+			t.Reset(bh.RefreshRate)
 		case s := <-bh.SigC: // SIGUSR1
 			log.WithFields(log.Fields{
 				"sig": s,

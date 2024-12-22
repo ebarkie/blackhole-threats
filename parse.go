@@ -48,8 +48,9 @@ func readFeed(feed string) (io.ReadCloser, error) {
 	return nil, ErrUnhandledScheme
 }
 
-// parseFeeds parses feeds concurrently and returns summarized nets.
-func parseFeeds(feeds ...string) (nets netcalc.Nets) {
+// parseFeeds parses feeds concurrently and returns summarized nets and the
+// total nets prior to summarization.
+func parseFeeds(feeds ...string) (nets netcalc.Nets, totalNets int) {
 	// Parse all of the feeds concurrently
 	netC := make(chan *net.IPNet)
 	var wg sync.WaitGroup
@@ -94,14 +95,10 @@ func parseFeeds(feeds ...string) (nets netcalc.Nets) {
 	}
 
 	// Summarize the networks
-	totalNets := len(nets)
+	totalNets = len(nets)
 	sort.Sort(nets)
 	nets.Assim()
 	nets.Aggr()
-	log.WithFields(log.Fields{
-		"summarized": len(nets),
-		"total":      totalNets,
-	}).Info("Feed parsing complete")
 
 	return
 }
