@@ -4,7 +4,7 @@
 
 Stand-alone BGP route server based on [GoBGP](https://github.com/osrg/gobgp)
 which downloads IPv4/v6 threat feeds on a periodic basis, summarizes them, and
-maintains them as routes.  Routers can then iBGP peer with it and
+maintains them as routes.  Routers can then peer with it and
 [blackhole](https://en.wikipedia.org/wiki/Black_hole_(networking)) these routes.
 
 ## Usage
@@ -44,6 +44,11 @@ gobgp:
         neighboraddress: "192.168.1.1"
         peeras: 64512
 
+# Each feed consists of a URL and optional community.
+#
+# The community is defined as `\<as\>:\<action\>` and each part may be in
+# the range of 0-65535.  If a community is not then it will be set to
+# `\<global as\>:666`.
 feeds:
 #  - url: http://localhost/drop.txt
 #    community: 64512:666
