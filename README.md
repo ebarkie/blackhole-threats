@@ -47,8 +47,8 @@ gobgp:
 # Each feed consists of a URL and optional community.
 #
 # The community is defined as "<as>:<action>" and each part may be in
-# the range of 0-65535.  If a community is not then it will be set to
-# "<global as>:666".
+# the range of 0-65535.  If a community is not defined then it will default
+# to "<global as>:666".
 feeds:
 #  - url: http://localhost/drop.txt
 #    community: 64512:666
