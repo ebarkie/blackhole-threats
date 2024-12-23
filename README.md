@@ -4,7 +4,7 @@
 
 Stand-alone BGP route server based on [GoBGP](https://github.com/osrg/gobgp)
 which downloads IPv4/v6 threat feeds on a periodic basis, summarizes them, and
-maintains them as routes.  Routers can then iBGP peer with it and
+maintains them as routes.  Routers can then peer with it and
 [blackhole](https://en.wikipedia.org/wiki/Black_hole_(networking)) these routes.
 
 ## Usage
@@ -14,7 +14,7 @@ Usage of ./blackhole-threats:
   -debug
     	Enable debug logging
   -conf string
-    	GoBGP configuration file (default "gobgpd.conf")
+    	Configuration file (default "blackhole-threats.yaml")
   -feed value
     	Threat intelligence feed (use multiple times)
   -refresh-rate duration
@@ -33,23 +33,25 @@ Some threat intelligence feeds:
 
 ## Configuration
 
-### GoBGP
+```yaml
+gobgp:
+  global:
+    config:
+      as: 64512
+      routerid: "192.168.1.1"
+  neighbors:
+    - config:
+        neighboraddress: "192.168.1.1"
+        peeras: 64512
 
-```toml
-[global.config]
-  as = 64512
-  router-id = "192.168.1.2"
-
-[[neighbors]]
-  [neighbors.config]
-    neighbor-address = "192.168.1.1"
-    peer-as = 64512
-  [[neighbors.afi-safis]]
-    [neighbors.afi-safis.config]
-      afi-safi-name = "ipv4-unicast"
-  [[neighbors.afi-safis]]
-    [neighbors.afi-safis.config]
-      afi-safi-name = "ipv6-unicast"
+# Each feed consists of a URL and optional community.
+#
+# The community is defined as "<as>:<action>" and each part may be in
+# the range of 0-65535.  If a community is not then it will be set to
+# "<global as>:666".
+feeds:
+#  - url: http://localhost/drop.txt
+#    community: 64512:666
 ```
 
 ### Mikrotik RouterOS

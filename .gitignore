@@ -2,7 +2,7 @@
 ._*
 *.swp
 
-/gobgpd.conf
+/blackhole-threats.yaml
 /blackhole-threats
 /version.go
 

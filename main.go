@@ -11,31 +11,20 @@ import (
 	"flag"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 )
-
-type urls []string
-
-func (u *urls) String() string {
-	return "[" + strings.Join(*u, " ") + "]"
-}
-
-func (u *urls) Set(value string) error {
-	*u = append(*u, value)
-	return nil
-}
 
 func main() {
 	// Parse flags
-	conf := flag.String("conf", "gobgpd.conf", "GoBGP configuration file")
+	conf := flag.String("conf", "blackhole-threats.yaml", "Configuration file")
 	debug := flag.Bool("debug", false, "Enable debug logging")
-	var feeds urls
+	var feeds feedSet
 	flag.Var(&feeds, "feed", "Threat intelligence feed (use multiple times)")
-	refreshRate := flag.Duration("refresh-rate", 120*time.Minute, "Refresh timer")
+	refreshRate := flag.Duration("refresh-rate", 2*time.Hour, "Refresh timer")
 	flag.Parse()
 
 	if *debug {
@@ -44,8 +33,21 @@ func main() {
 
 	log.Infof("BGP threat blackhole route server (version %s)", version)
 
+	// Parse configuration
+	var c Config
+	bs, err := os.ReadFile(*conf)
+	if err != nil {
+		log.WithError(err).Fatal("Unable to read feed config")
+	}
+
+	if err := yaml.Unmarshal(bs, &c); err != nil {
+		log.WithError(err).Fatal("Unable to parse feed config")
+	}
+
+	feeds = append(feeds, c.Feeds...)
+
 	// Start Blackhole server
-	bh, err := NewServer(*conf)
+	bh, err := NewServer(&c.GoBGP)
 	if err != nil {
 		log.Fatal(err)
 	}

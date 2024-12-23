@@ -33,7 +33,7 @@ override_dh_auto_install:
 	dh_auto_install -- --no-source
 	mv $(TMP)/usr/bin $(TMP)/usr/sbin
 	mkdir $(TMP)/etc
-	cp gobgpd.conf.sample $(TMP)/etc/blackhole-threats.conf
+	cp blackhole-threats.yaml.sample $(TMP)/etc/blackhole-threats.yaml
 
 override_dh_auto_test:
 
