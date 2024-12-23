@@ -17,25 +17,21 @@ import (
 	"github.com/golang/protobuf/ptypes/any"
 	api "github.com/osrg/gobgp/v3/api"
 	gobgpconfig "github.com/osrg/gobgp/v3/pkg/config"
+	"github.com/osrg/gobgp/v3/pkg/config/oc"
 	"github.com/osrg/gobgp/v3/pkg/server"
 	log "github.com/sirupsen/logrus"
 )
 
 // NewServer creates, starts, and configures a new BGP server with configFile.
-func NewServer(configFile string) (Blackhole, error) {
-	c, err := gobgpconfig.ReadConfigFile(configFile, "toml")
-	if err != nil {
-		return Blackhole{}, err
-	}
-
+func NewServer(config *oc.BgpConfigSet) (Blackhole, error) {
 	s := server.NewBgpServer()
 	go s.Serve()
-	_, err = gobgpconfig.InitialConfig(context.Background(), s, c, true)
+	_, err := gobgpconfig.InitialConfig(context.Background(), s, config, true)
 
 	return Blackhole{
 		server:   s,
-		as:       c.Global.Config.As,
-		routerID: c.Global.Config.RouterId,
+		as:       config.Global.Config.As,
+		routerID: config.Global.Config.RouterId,
 	}, err
 }
 

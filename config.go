@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/osrg/gobgp/v3/pkg/config/oc"
 )
 
 var ErrMalformedComm = errors.New("malformed community")
@@ -58,7 +60,8 @@ func (c FeedConfig) String() string {
 }
 
 type Config struct {
-	Feeds []FeedConfig `yaml:"feeds"`
+	GoBGP oc.BgpConfigSet `yaml:"gobgp"`
+	Feeds []FeedConfig    `yaml:"feeds"`
 }
 
 type feedSet []FeedConfig

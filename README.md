@@ -14,7 +14,7 @@ Usage of ./blackhole-threats:
   -debug
     	Enable debug logging
   -conf string
-    	GoBGP configuration file (default "gobgpd.conf")
+    	Configuration file (default "blackhole-threats.yaml")
   -feed value
     	Threat intelligence feed (use multiple times)
   -refresh-rate duration
@@ -33,23 +33,20 @@ Some threat intelligence feeds:
 
 ## Configuration
 
-### GoBGP
+```yaml
+gobgp:
+  global:
+    config:
+      as: 64512
+      routerid: "192.168.1.1"
+  neighbors:
+    - config:
+        neighboraddress: "192.168.1.1"
+        peeras: 64512
 
-```toml
-[global.config]
-  as = 64512
-  router-id = "192.168.1.2"
-
-[[neighbors]]
-  [neighbors.config]
-    neighbor-address = "192.168.1.1"
-    peer-as = 64512
-  [[neighbors.afi-safis]]
-    [neighbors.afi-safis.config]
-      afi-safi-name = "ipv4-unicast"
-  [[neighbors.afi-safis]]
-    [neighbors.afi-safis.config]
-      afi-safi-name = "ipv6-unicast"
+feeds:
+#  - url: http://localhost/drop.txt
+#    community: 64512:666
 ```
 
 ### Mikrotik RouterOS

@@ -1,0 +1,13 @@
+gobgp:
+  global:
+    config:
+      as: 64512
+      routerid: "192.168.1.1"
+  neighbors:
+    - config:
+        neighboraddress: "192.168.1.1"
+        peeras: 64512
+
+feeds:
+#  - url: http://localhost/drop.txt
+#    community: 64512:666
