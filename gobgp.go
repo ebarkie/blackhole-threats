@@ -12,8 +12,6 @@ import (
 	"time"
 
 	"google.golang.org/protobuf/types/known/anypb"
-
-	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
 	api "github.com/osrg/gobgp/v3/api"
 	gobgpconfig "github.com/osrg/gobgp/v3/pkg/config"
@@ -75,7 +73,7 @@ func (bh Blackhole) addPath(ipnet *net.IPNet, comms ...uint32) error {
 
 	ones, bits := ipnet.Mask.Size()
 
-	nlri, err := ptypes.MarshalAny(&api.IPAddressPrefix{
+	nlri, err := anypb.New(&api.IPAddressPrefix{
 		Prefix:    ipnet.IP.String(),
 		PrefixLen: uint32(ones),
 	})
@@ -83,11 +81,11 @@ func (bh Blackhole) addPath(ipnet *net.IPNet, comms ...uint32) error {
 		return err
 	}
 
-	originAttr, _ := ptypes.MarshalAny(&api.OriginAttribute{
+	originAttr, _ := anypb.New(&api.OriginAttribute{
 		Origin: 0,
 	})
 
-	communitiesAttr, _ := ptypes.MarshalAny(&api.CommunitiesAttribute{
+	communitiesAttr, _ := anypb.New(&api.CommunitiesAttribute{
 		Communities: comms,
 	})
 
@@ -95,12 +93,12 @@ func (bh Blackhole) addPath(ipnet *net.IPNet, comms ...uint32) error {
 	var nextHopAttr *anypb.Any
 	if bits <= 32 { // IPv4
 		family = v4Family
-		nextHopAttr, _ = ptypes.MarshalAny(&api.NextHopAttribute{
+		nextHopAttr, _ = anypb.New(&api.NextHopAttribute{
 			NextHop: bh.routerID,
 		})
 	} else { // IPv6
 		family = v6Family
-		nextHopAttr, _ = ptypes.MarshalAny(&api.MpReachNLRIAttribute{
+		nextHopAttr, _ = anypb.New(&api.MpReachNLRIAttribute{
 			Family:   v6Family,
 			Nlris:    []*any.Any{nlri},
 			NextHops: []string{"::ffff:" + bh.routerID},
