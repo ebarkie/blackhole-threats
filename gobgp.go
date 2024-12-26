@@ -105,17 +105,12 @@ func (bh Blackhole) addPath(ipnet *net.IPNet, comms ...uint32) error {
 		})
 	}
 
-	var isWithdraw bool
-	if len(comms) < 1 {
-		isWithdraw = true
-	}
-
 	_, err = bh.server.AddPath(context.Background(), &api.AddPathRequest{
 		Path: &api.Path{
 			Family:     family,
 			Nlri:       nlri,
 			Pattrs:     []*any.Any{originAttr, nextHopAttr, communitiesAttr},
-			IsWithdraw: isWithdraw,
+			IsWithdraw: len(comms) < 1,
 		}})
 
 	return err
