@@ -11,13 +11,13 @@ import (
 	"slices"
 	"time"
 
-	"google.golang.org/protobuf/types/known/anypb"
 	"github.com/golang/protobuf/ptypes/any"
 	api "github.com/osrg/gobgp/v3/api"
 	gobgpconfig "github.com/osrg/gobgp/v3/pkg/config"
 	"github.com/osrg/gobgp/v3/pkg/config/oc"
 	"github.com/osrg/gobgp/v3/pkg/server"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 // NewServer creates, starts, and configures a new BGP server with configFile.
