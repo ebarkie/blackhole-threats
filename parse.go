@@ -117,8 +117,8 @@ func parseFeeds(feeds ...string) (nets netcalc.Nets, totalNets int) {
 	return
 }
 
-// spamhausEntry represents a Spamhaus list entry.
-type spamhausEntry struct {
+// sblEntry represents a Spamhaus Block List entry.
+type sblEntry struct {
 	// IP network to drop, in CIDR format.
 	CIDR string `json:"cidr"`
 
@@ -135,7 +135,7 @@ func readFromJSON(r io.Reader, netC chan<- *net.IPNet) (int64, error) {
 	d := json.NewDecoder(r)
 	var i int64
 	for ; ; i++ {
-		var e spamhausEntry
+		var e sblEntry
 		err := d.Decode(&e)
 		if err == io.EOF {
 			break
