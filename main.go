@@ -63,7 +63,6 @@ func main() {
 	defer stop()
 	signal.Notify(bh.SigC, os.Signal(syscall.SIGUSR1))
 
-	log.WithFields(log.Fields{
-		"err": bh.UpdateRoutes(ctx),
-	}).Info("Server stopped")
+	log.WithError(bh.UpdateRoutes(ctx)).Info("Server stopped")
+
 }

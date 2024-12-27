@@ -5,7 +5,7 @@ go 1.22.7
 toolchain go1.23.4
 
 require (
-	github.com/ebarkie/netaggr v1.3.3
+	github.com/ebarkie/netaggr v1.3.9
 	github.com/golang/protobuf v1.5.3
 	github.com/osrg/gobgp/v3 v3.32.0
 	github.com/sirupsen/logrus v1.9.3

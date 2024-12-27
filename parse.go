@@ -5,6 +5,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/ebarkie/netaggr/pkg/netcalc"
@@ -22,30 +24,45 @@ import (
 
 var ErrUnhandledScheme = errors.New("unhandled scheme")
 
-// readFeed determines a feed's scheme and creates an appropriate io.ReadCloser.
-func readFeed(feed string) (io.ReadCloser, error) {
+// readFeed reads a feed and returns the number of networks.
+func readFeed(feed string, netC chan<- *net.IPNet) (int64, error) {
 	u, err := url.Parse(feed)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	switch u.Scheme {
 	case "":
-		return os.Open(feed)
+		r, err := os.Open(feed)
+		if err != nil {
+			return 0, err
+		}
+		defer r.Close()
+
+		if strings.HasSuffix(feed, ".json") {
+			return readFromJSON(r, netC)
+		} else {
+			return netcalc.ReadFrom(r, netC)
+		}
 	case "http", "https":
 		resp, err := http.Get(feed)
 		if err != nil {
-			return nil, err
+			return 0, err
 		}
+		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("non-OK status code: %d", resp.StatusCode)
+			return 0, fmt.Errorf("non-OK status code: %d", resp.StatusCode)
 		}
 
-		return resp.Body, nil
+		if strings.Contains(resp.Header.Get("Content-Type"), "/json") {
+			return readFromJSON(resp.Body, netC)
+		} else {
+			return netcalc.ReadFrom(resp.Body, netC)
+		}
 	}
 
-	return nil, ErrUnhandledScheme
+	return 0, fmt.Errorf("%w: %s", ErrUnhandledScheme, u.Scheme)
 }
 
 // parseFeeds parses feeds concurrently and returns summarized nets and the
@@ -64,22 +81,19 @@ func parseFeeds(feeds ...string) (nets netcalc.Nets, totalNets int) {
 		go func(feed string) {
 			defer wg.Done()
 
-			r, err := readFeed(feed)
+			i, err := readFeed(feed, netC)
 			if err != nil {
 				log.WithFields(log.Fields{
-					"err": err,
-				}).Error("Feed read error")
+					"feed": feed,
+				}).WithError(err).Error("Feed read error")
 				return
 			}
-			defer r.Close()
 
-			i, err := netcalc.ReadFrom(r, netC)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"feed": feed,
 					"nets": i,
-					"err":  err,
-				}).Error("Feed parse error")
+				}).WithError(err).Error("Feed parse error")
 				return
 			}
 
@@ -101,4 +115,45 @@ func parseFeeds(feeds ...string) (nets netcalc.Nets, totalNets int) {
 	nets.Aggr()
 
 	return
+}
+
+// spamhausEntry represents a Spamhaus list entry.
+type spamhausEntry struct {
+	// IP network to drop, in CIDR format.
+	CIDR string `json:"cidr"`
+
+	// Regional Internet Registry that manages the network.
+	RIR string `json:"rir"`
+
+	// Spamhaus Block List identifier.
+	SBLID string `json:"sblid"`
+}
+
+// readFromJSON parses the io.Reader as Spamhaus formatted JSONL and sends the
+// resulting IPNets to the NetC channel.
+func readFromJSON(r io.Reader, netC chan<- *net.IPNet) (int64, error) {
+	d := json.NewDecoder(r)
+	var i int64
+	for ; ; i++ {
+		var e spamhausEntry
+		err := d.Decode(&e)
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return i, fmt.Errorf("line %d decode: %w", i, err)
+		}
+		if e.CIDR == "" {
+			// Probably the footer line
+			continue
+		}
+
+		_, n, err := netcalc.ParseNet(e.CIDR)
+		if err != nil {
+			return i, fmt.Errorf("line %d parse %q: %w", i, e.CIDR, err)
+		}
+
+		netC <- n
+	}
+
+	return i, nil
 }
