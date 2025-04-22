@@ -6,7 +6,7 @@ toolchain go1.24.1
 require (
 	github.com/ebarkie/netaggr v1.3.9
 	github.com/golang/protobuf v1.5.3
-	github.com/osrg/gobgp/v3 v3.32.0
+	github.com/osrg/gobgp/v3 v3.35.0
 	github.com/sirupsen/logrus v1.9.3
 	google.golang.org/protobuf v1.33.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -17,7 +17,7 @@ require (
 	github.com/eapache/channels v1.1.0 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
-	github.com/google/uuid v1.3.1 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/k-sone/critbitgo v1.4.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
